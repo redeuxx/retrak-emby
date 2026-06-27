@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
@@ -177,6 +177,17 @@ namespace Trakt.Api
                         {
                             tvdb = tvDbId.ConvertToInt()
                         },
+                    },
+                    show = new TraktShow
+                    {
+                        title = episode.Series.Name,
+                        year = episode.Series.ProductionYear,
+                        ids = new TraktShowId
+                        {
+                            tvdb = episode.Series.GetProviderId(MetadataProviders.Tvdb).ConvertToInt(),
+                            imdb = episode.Series.GetProviderId(MetadataProviders.Imdb),
+                            tvrage = episode.Series.GetProviderId(MetadataProviders.TvRage).ConvertToInt()
+                        }
                     }
                 });
             }
@@ -1152,22 +1163,13 @@ namespace Trakt.Api
             return options;
         }
 
-        private async Task SetRequestHeaders(HttpRequestOptions options, TraktUser traktUser, CancellationToken cancellationToken)
+        private Task SetRequestHeaders(HttpRequestOptions options, TraktUser traktUser, CancellationToken cancellationToken)
         {
-
-            if (DateTimeOffset.Now > traktUser.AccessTokenExpiration)
-            {
-                traktUser.AccessToken = "";
-            }
-            if (string.IsNullOrEmpty(traktUser.AccessToken) || !string.IsNullOrEmpty(traktUser.PIN))
-            {
-                await RefreshUserAuth(traktUser, cancellationToken).ConfigureAwait(false);
-            }
             if (!string.IsNullOrEmpty(traktUser.AccessToken))
             {
                 options.RequestHeaders.Add("Authorization", "Bearer " + traktUser.AccessToken);
             }
-
+            return Task.CompletedTask;
         }
     }
 }
