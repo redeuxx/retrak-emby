@@ -1,4 +1,4 @@
-﻿using MediaBrowser.Model.Plugins;
+using MediaBrowser.Model.Plugins;
 using Trakt.Model;
 
 namespace Trakt.Configuration
@@ -8,8 +8,10 @@ namespace Trakt.Configuration
         public PluginConfiguration()
         {
             TraktUsers = new TraktUser[] {};
+            ReTrakUrl = "https://retrak.tv";
         }
 
         public TraktUser[] TraktUsers { get; set; }
+        public string ReTrakUrl { get; set; }
     }
 }

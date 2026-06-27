@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     <title>Trakt</title>
@@ -15,13 +15,20 @@
 
                     <div style="height:0; overflow: hidden;"><input type="text" name="fakeusernameremembered" tabindex="-1" /><input type="password" name="fakepasswordremembered" tabindex="-1" /></div>
 
+                    <div class="inputContainer">
+                        <input is="emby-input" id="txtReTrakUrl" name="txtReTrakUrl" type="text" label="ReTrak URL:" />
+                        <div class="fieldDescription">
+                            The URL of your ReTrak instance (e.g. <code>https://retrak.tv</code>).
+                        </div>
+                    </div>
+
                     <div class="selectContainer">
                         <select is="emby-select" id="selectUser" name="selectUser" label="Configure Trakt for:"></select>
                     </div>
                     <div class="inputContainer">
-                        <input is="emby-input" id="txtTraktPIN" name="txtTraktPIN" type="text" label="Authentication PIN:" />
+                        <input is="emby-input" id="txtAccessToken" name="txtAccessToken" type="text" label="ReTrak API Key:" />
                         <div class="fieldDescription">
-                            <a href="https://trakt.tv/oauth/authorize?response_type=code&client_id=c44548028dcd8f31e9bee55318562e6e5deb8524f5ca3e77e167fd3b1c9ce380&redirect_uri=urn:ietf:wg:oauth:2.0:oob" target="_blank">Get PIN.</a> When the pin is successfully exchanged for a token, it is deleted from this field. Afterwards, the hidden token is used.
+                            Enter your personal API key (prefixed with <code>dnt_</code>) from the ReTrak settings page.
                         </div>
                     </div>
                     <div>

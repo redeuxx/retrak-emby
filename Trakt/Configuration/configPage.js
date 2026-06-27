@@ -36,7 +36,7 @@ define([
       if (!currentUserConfig) {
         // You don't have to put every property in here, just the ones the UI is expecting (below)
         currentUserConfig = {
-          PIN: "",
+          AccessToken: "",
           SkipUnwatchedImportFromTrakt: true,
           PostWatchedHistory: true,
           SyncCollection: true,
@@ -49,7 +49,8 @@ define([
       currentUserConfig.LocationsExcluded =
         currentUserConfig.LocationsExcluded || [];
 
-      formElements.txtTraktPIN.value = currentUserConfig.PIN;
+      formElements.txtReTrakUrl.value = config.ReTrakUrl || "https://retrak.tv";
+      formElements.txtAccessToken.value = currentUserConfig.AccessToken || "";
       formElements.chkSkipUnwatchedImportFromTrakt.checked =
         currentUserConfig.SkipUnwatchedImportFromTrakt;
       formElements.chkPostWatchedHistory.checked =
@@ -141,9 +142,10 @@ define([
       currentUserConfig.ExtraLogging = form.elements.chkExtraLogging.checked;
       currentUserConfig.ExportMediaInfo =
         form.elements.chkExportMediaInfo.checked;
-      currentUserConfig.PIN = form.elements.txtTraktPIN.value;
+      currentUserConfig.AccessToken = form.elements.txtAccessToken.value;
       currentUserConfig.LinkedMbUserId = currentUserId;
       currentUserConfig.LocationsExcluded = locationsExcluded;
+      config.ReTrakUrl = form.elements.txtReTrakUrl.value;
 
       if (currentUserConfig.UserName === "") {
         config.TraktUsers.remove(config.TraktUsers.indexOf(currentUserConfig));
