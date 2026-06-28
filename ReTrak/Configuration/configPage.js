@@ -22,7 +22,7 @@ define([
     return this;
   };
 
-  var pluginUniqueId = "8abc6789-fde2-4705-8592-4028806fa343";
+  var pluginUniqueId = "4e2945d8-c6df-4613-bc75-c54d193d58ef";
 
   function loadConfiguration(userId, form) {
     ApiClient.getPluginConfiguration(pluginUniqueId).then(function (config) {
