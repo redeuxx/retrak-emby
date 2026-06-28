@@ -57,7 +57,7 @@ namespace ReTrak
                     Name = "retrakuser",
                     DisplayName = "ReTrak",
                     EmbeddedResourcePath = GetType().Namespace + ".Configuration.userPage.html",
-                    EnableInMainMenu = false,
+                    EnableInMainMenu = true,
                     MenuSection = "user",
                     MenuIcon = "live_tv"
                 },
