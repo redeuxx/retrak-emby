@@ -173,6 +173,8 @@ namespace ReTrak.Api
                     progress = progressPercent,
                     episode = new ReTrakEpisode
                     {
+                        season = episode.GetSeasonNumber(),
+                        number = episode.IndexNumber,
                         ids = new ReTrakEpisodeId
                         {
                             tvdb = tvDbId.ConvertToInt()
