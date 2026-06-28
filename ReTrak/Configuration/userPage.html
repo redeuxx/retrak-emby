@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ReTrak</title>
+</head>
+<body>
+    <!-- ReSharper disable UnknownCssClass -->
+    <div id="retrakUserPage" data-role="page" class="page libraryPage userPreferencesPage" data-controller="__plugin/retrakuserjs">
+        <div data-role="content">
+            <div class="content-primary">
+                <div class="verticalSection">
+                    <div class="sectionTitleContainer sectionTitleContainer-cards">
+                        <h2 class="sectionTitle">ReTrak</h2>
+                    </div>
+                </div>
+
+                <form id="retrakUserConfigurationForm">
+                    <div style="height:0; overflow: hidden;"><input type="text" name="fakeusernameremembered" tabindex="-1" /><input type="password" name="fakepasswordremembered" tabindex="-1" /></div>
+
+                    <div class="inputContainer">
+                        <input is="emby-input" id="txtUserAccessToken" name="txtUserAccessToken" type="text" label="ReTrak API Key:" />
+                        <div class="fieldDescription">
+                            Enter your personal API key (prefixed with <code>dnt_</code>) from the ReTrak settings page at <a href="https://retrak.tv/settings" target="_blank">retrak.tv/settings</a>.
+                        </div>
+                    </div>
+
+                    <div class="checkboxContainer checkboxContainer-withDescription">
+                        <label>
+                            <input is="emby-checkbox" type="checkbox" id="chkUserSkipUnwatchedImportFromReTrak" name="chkUserSkipUnwatchedImportFromReTrak" />
+                            <span>Skip unwatched import from ReTrak</span>
+                        </label>
+                        <div class="fieldDescription checkboxFieldDescription">
+                            If checked, only watched items will be imported from ReTrak. Unwatched status will not overwrite your local watched state.
+                        </div>
+                    </div>
+
+                    <div class="checkboxContainer checkboxContainer-withDescription">
+                        <label>
+                            <input is="emby-checkbox" type="checkbox" id="chkUserPostWatchedHistory" name="chkUserPostWatchedHistory" />
+                            <span>Update ReTrak watched history during Scheduled Task</span>
+                        </label>
+                        <div class="fieldDescription checkboxFieldDescription">
+                            If checked, Emby will sync watch states to ReTrak during scheduled tasks. Scrobbling always works regardless of this setting.
+                        </div>
+                    </div>
+
+                    <div class="checkboxContainer checkboxContainer-withDescription">
+                        <label>
+                            <input is="emby-checkbox" type="checkbox" id="chkUserSyncCollection" name="chkUserSyncCollection" />
+                            <span>Sync Collection during Scheduled Task</span>
+                        </label>
+                        <div class="fieldDescription checkboxFieldDescription">
+                            When checked, items will be added to or removed from your ReTrak collection.
+                        </div>
+                    </div>
+
+                    <div class="checkboxContainer checkboxContainer-withDescription">
+                        <label>
+                            <input is="emby-checkbox" type="checkbox" id="chkUserExtraLogging" name="chkUserExtraLogging" />
+                            <span>Enable debug logging</span>
+                        </label>
+                        <div class="fieldDescription checkboxFieldDescription">
+                            When enabled, all data sent to ReTrak is logged. Use this when reporting a problem.
+                        </div>
+                    </div>
+
+                    <div class="checkboxContainer checkboxContainer-withDescription">
+                        <label>
+                            <input is="emby-checkbox" type="checkbox" id="chkUserExportMediaInfo" name="chkUserExportMediaInfo" />
+                            <span>Export media info</span>
+                        </label>
+                        <div class="fieldDescription checkboxFieldDescription">
+                            Send audio and video metadata to ReTrak.
+                        </div>
+                    </div>
+
+                    <div>
+                        <button is="emby-button" type="submit" class="raised button-submit block"><span>${ButtonSave}</span></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- ReSharper restore UnknownCssClass -->
+</body>
+</html>

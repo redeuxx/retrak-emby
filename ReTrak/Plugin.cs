@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using MediaBrowser.Common.Configuration;
@@ -40,6 +40,7 @@ namespace ReTrak
         {
             return new[]
             {
+                // Admin plugin configuration page
                 new PluginPageInfo
                 {
                     Name = "ReTrak",
@@ -49,6 +50,21 @@ namespace ReTrak
                 {
                     Name = "retrakjs",
                     EmbeddedResourcePath = GetType().Namespace + ".Configuration.configPage.js"
+                },
+                // Per-user preferences page (appears in user preferences sidebar)
+                new PluginPageInfo
+                {
+                    Name = "retrakuser",
+                    DisplayName = "ReTrak",
+                    EmbeddedResourcePath = GetType().Namespace + ".Configuration.userPage.html",
+                    EnableInMainMenu = false,
+                    MenuSection = "user",
+                    MenuIcon = "live_tv"
+                },
+                new PluginPageInfo
+                {
+                    Name = "retrakuserjs",
+                    EmbeddedResourcePath = GetType().Namespace + ".Configuration.userPage.js"
                 }
             };
         }
