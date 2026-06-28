@@ -177,6 +177,7 @@ namespace ReTrak.Api
                         number = episode.IndexNumber,
                         ids = new ReTrakEpisodeId
                         {
+                            tmdb = episode.GetProviderId(MetadataProviders.Tmdb).ConvertToInt(),
                             tvdb = tvDbId.ConvertToInt()
                         },
                     },
@@ -186,6 +187,7 @@ namespace ReTrak.Api
                         year = episode.Series.ProductionYear,
                         ids = new ReTrakShowId
                         {
+                            tmdb = episode.Series.GetProviderId(MetadataProviders.Tmdb).ConvertToInt(),
                             tvdb = episode.Series.GetProviderId(MetadataProviders.Tvdb).ConvertToInt(),
                             imdb = episode.Series.GetProviderId(MetadataProviders.Imdb),
                             tvrage = episode.Series.GetProviderId(MetadataProviders.TvRage).ConvertToInt()
@@ -216,6 +218,7 @@ namespace ReTrak.Api
                             year = episode.Series.ProductionYear,
                             ids = new ReTrakShowId
                             {
+                                tmdb = episode.Series.GetProviderId(MetadataProviders.Tmdb).ConvertToInt(),
                                 tvdb = episode.Series.GetProviderId(MetadataProviders.Tvdb).ConvertToInt(),
                                 imdb = episode.Series.GetProviderId(MetadataProviders.Imdb),
                                 tvrage = episode.Series.GetProviderId(MetadataProviders.TvRage).ConvertToInt()
