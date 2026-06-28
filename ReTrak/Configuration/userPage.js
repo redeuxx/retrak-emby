@@ -15,6 +15,7 @@ define([
 
   function loadUserConfiguration(userId, form) {
     ApiClient.getPluginConfiguration(pluginUniqueId).then(function (config) {
+      config = config || {};
       var currentUserConfig = (config.ReTrakUsers || []).filter(function (u) {
         return u.LinkedMbUserId == userId;
       })[0];
@@ -39,6 +40,9 @@ define([
       formElements.chkUserExportMediaInfo.checked = currentUserConfig.ExportMediaInfo;
 
       loading.hide();
+    }).catch(function (err) {
+      console.error("Error loading user configuration:", err);
+      loading.hide();
     });
   }
 
@@ -50,6 +54,7 @@ define([
     var userId = getCurrentUserId();
 
     ApiClient.getPluginConfiguration(pluginUniqueId).then(function (config) {
+      config = config || {};
       config.ReTrakUsers = config.ReTrakUsers || [];
 
       var currentUserConfig = config.ReTrakUsers.filter(function (u) {
@@ -73,7 +78,13 @@ define([
         Dashboard.processPluginConfigurationUpdateResult(result);
         Dashboard.alert("Settings saved.");
         loading.hide();
+      }).catch(function (err) {
+        console.error("Error updating user configuration:", err);
+        loading.hide();
       });
+    }).catch(function (err) {
+      console.error("Error loading user configuration for save:", err);
+      loading.hide();
     });
 
     return false;

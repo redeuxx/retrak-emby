@@ -1,11 +1,10 @@
 define([
-  "jQuery",
   "loading",
   "emby-input",
   "emby-button",
   "emby-select",
   "emby-checkbox",
-], function ($, loading) {
+], function (loading) {
   "use strict";
 
   Array.prototype.remove = function () {
@@ -26,15 +25,14 @@ define([
 
   function loadConfiguration(userId, form) {
     ApiClient.getPluginConfiguration(pluginUniqueId).then(function (config) {
+      config = config || {};
+      config.ReTrakUsers = config.ReTrakUsers || [];
       var currentUserConfig = config.ReTrakUsers.filter(function (curr) {
         return curr.LinkedMbUserId == userId;
       })[0];
-      var formElements = document.querySelector(
-        "#retrakConfigurationForm"
-      ).elements;
-      // User doesn't have a config, so create a default one.
+      
+      var formElements = form.elements;
       if (!currentUserConfig) {
-        // You don't have to put every property in here, just the ones the UI is expecting (below)
         currentUserConfig = {
           AccessToken: "",
           SkipUnwatchedImportFromReTrak: true,
@@ -45,7 +43,6 @@ define([
         };
       }
 
-      // Default this to an empty array so the rendering code doesn't have to worry about it
       currentUserConfig.LocationsExcluded =
         currentUserConfig.LocationsExcluded || [];
 
@@ -59,11 +56,16 @@ define([
       formElements.chkExtraLogging.checked = currentUserConfig.ExtraLogging;
       formElements.chkExportMediaInfo.checked =
         currentUserConfig.ExportMediaInfo;
-      // List the folders the user can access
+
       ApiClient.getVirtualFolders(userId).then(function (virtualFolders) {
         loadFolders(currentUserConfig, virtualFolders, form);
+      }).catch(function (err) {
+        console.error("Error loading virtual folders:", err);
+      }).then(function () {
+        loading.hide();
       });
-
+    }).catch(function (err) {
+      console.error("Error loading configuration:", err);
       loading.hide();
     });
   }
@@ -81,17 +83,26 @@ define([
 
   function loadFolders(currentUserConfig, virtualFolders, form) {
     var retrakLocationElem = form.querySelector("#divReTrakLocations");
-    var html = virtualFolders.reduce(function (acc, virtualFolder) {
+    if (!retrakLocationElem) return;
+
+    // Emby may return an array or a QueryResult { Items: [...] }
+    var folders = Array.isArray(virtualFolders)
+      ? virtualFolders
+      : (virtualFolders && virtualFolders.Items) || [];
+
+    var html = folders.reduce(function (acc, virtualFolder) {
       acc.push(getFolderHtml(currentUserConfig, virtualFolder));
       return acc;
     }, []);
     retrakLocationElem.innerHTML = html.join("");
-    // How to trigger this without jQuery?
-    $(retrakLocationElem).trigger("create");
+    
+    if (typeof $ !== 'undefined' && $.fn && $.fn.trigger) {
+      $(retrakLocationElem).trigger("create");
+    }
   }
 
   function getFolderHtml(currentUserConfig, virtualFolder) {
-    return virtualFolder.Locations.map(function (location) {
+    return (virtualFolder.Locations || []).map(function (location) {
       var isChecked = currentUserConfig.LocationsExcluded.filter(function (
         current
       ) {
@@ -111,7 +122,6 @@ define([
     loading.show();
 
     var form = ev.currentTarget;
-
     var currentUserId = form.elements.selectUser.value;
     var locationsExcluded = Array.from(
       document.getElementsByName("retrak_location")
@@ -124,10 +134,12 @@ define([
       });
 
     ApiClient.getPluginConfiguration(pluginUniqueId).then(function (config) {
+      config = config || {};
+      config.ReTrakUsers = config.ReTrakUsers || [];
       var currentUserConfig = config.ReTrakUsers.filter(function (user) {
         return user.LinkedMbUserId == currentUserId;
       })[0];
-      // User doesn't have a config, so create a default one.
+      
       if (!currentUserConfig) {
         currentUserConfig = {};
         config.ReTrakUsers.push(currentUserConfig);
@@ -147,9 +159,6 @@ define([
       currentUserConfig.LocationsExcluded = locationsExcluded;
       config.ReTrakUrl = form.elements.txtReTrakUrl.value;
 
-      if (currentUserConfig.UserName === "") {
-        config.ReTrakUsers.remove(config.ReTrakUsers.indexOf(currentUserConfig));
-      }
       ApiClient.updatePluginConfiguration(pluginUniqueId, config).then(
         function (result) {
           Dashboard.processPluginConfigurationUpdateResult(result);
@@ -159,9 +168,18 @@ define([
             form.elements.selectUser.value = currentUserId;
             loadConfiguration(currentUserId, form);
             Dashboard.alert("Settings saved.");
+          }).catch(function (err) {
+            console.error("Error refreshing users after save:", err);
+            loading.hide();
           });
         }
-      );
+      ).catch(function (err) {
+        console.error("Error updating configuration:", err);
+        loading.hide();
+      });
+    }).catch(function (err) {
+      console.error("Error retrieving configuration for save:", err);
+      loading.hide();
     });
 
     return false;
@@ -182,6 +200,9 @@ define([
       ApiClient.getUsers().then(function (users) {
         populateUsers(users, userSelect);
         loadConfiguration(userSelect.value, form);
+      }).catch(function (err) {
+        console.error("Error loading users in viewshow:", err);
+        loading.hide();
       });
     });
   };
