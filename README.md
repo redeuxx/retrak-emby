@@ -28,3 +28,15 @@ This produces a `ReTrak.dll` file in the build output directory (`ReTrak/bin/Rel
 3. Enter your ReTrak server URL (defaults to `https://retrak.tv`).
 4. To configure custom OAuth clients, replace the client credentials in `ReTrakURIs.cs` and `configPage.html` with your registered application credentials.
 5. Click **Authenticate** to link your user profile.
+
+### 4. Per-User Configuration (Non-Admin Settings)
+
+Because Emby's core server binaries hardcode the sidebar navigation list, the ReTrak link does not appear directly under the user preferences sidebar. However, standard users can easily configure their own ReTrak settings and API keys.
+
+Instruct your users to log in to Emby and navigate directly to this URL in their browser (replace `<your-emby-server>` with your actual server domain or IP address):
+
+```text
+http://<your-emby-server>/web/index.html#!/configurationpage?name=retrakuser
+```
+
+This direct link will open the ReTrak user settings interface, where they can configure their personal API keys and sync options independently.
