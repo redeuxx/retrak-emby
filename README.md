@@ -10,15 +10,22 @@ ReTrak for Emby is a plugin for Emby Server that automatically scrobbles media p
 
 ## Setup Guide
 
-### 1. Build the Plugin
-To compile the plugin from source, you can use the dotnet CLI or build with Visual Studio:
+### 1. Get the Plugin
+
+**Option A: Download the release (recommended)**
+
+Download `retrak-emby.dll` from the [latest release](https://github.com/redeuxx/retrak-emby/releases/latest). No compilation required.
+
+**Option B: Build from source**
+
+To compile the plugin yourself, use the dotnet CLI or build with Visual Studio:
 ```bash
 dotnet build ReTrak.sln -c Release
 ```
-This produces a `ReTrak.dll` file in the build output directory (`ReTrak/bin/Release/`).
+This produces a `retrak-emby.dll` file in the build output directory (`ReTrak/bin/Release/netstandard2.0/`).
 
 ### 2. Install the Plugin
-1. Copy the compiled `ReTrak.dll` file.
+1. Copy the `retrak-emby.dll` file.
 2. Paste it into the `plugins` folder inside your Emby Server data directory.
 3. Restart your Emby Server to load the plugin.
 
@@ -26,8 +33,7 @@ This produces a `ReTrak.dll` file in the build output directory (`ReTrak/bin/Rel
 1. Open the Emby Server Dashboard.
 2. Navigate to **Plugins** in the left sidebar and select the **ReTrak** plugin.
 3. Enter your ReTrak server URL (defaults to `https://retrak.tv`).
-4. To configure custom OAuth clients, replace the client credentials in `ReTrakURIs.cs` and `configPage.html` with your registered application credentials.
-5. Click **Authenticate** to link your user profile.
+4. Click **Authenticate** to link your user profile.
 
 ### 4. Per-User Configuration (Non-Admin Settings)
 
