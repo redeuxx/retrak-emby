@@ -14,6 +14,7 @@ using System;
 using System.Linq;
 using ReTrak.Api;
 using ReTrak.Helpers;
+using ReTrak.Model;
 using System.Collections.Generic;
 using System.Threading;
 
@@ -32,6 +33,7 @@ namespace ReTrak
         private LibraryManagerEventsHelper _libraryManagerEventsHelper;
         private readonly UserDataManagerEventsHelper _userDataManagerEventsHelper;
         private IUserDataManager _userDataManager;
+        private readonly Dictionary<Guid, PlaybackState> _playbackState = new Dictionary<Guid, PlaybackState>();
 
         public static ServerMediator Instance { get; private set; }
 
@@ -96,6 +98,7 @@ namespace ReTrak
         {
             _userDataManager.UserDataSaved += _userDataManager_UserDataSaved;
             _sessionManager.PlaybackStart += KernelPlaybackStart;
+            _sessionManager.PlaybackProgress += KernelPlaybackProgress;
             _sessionManager.PlaybackStopped += KernelPlaybackStopped;
             _libraryManager.ItemAdded += LibraryManagerItemAdded;
             _libraryManager.ItemRemoved += LibraryManagerItemRemoved;
@@ -150,7 +153,8 @@ namespace ReTrak
                 }
 
                 // Since Emby is user profile friendly, I'm going to need to do a user lookup every time something starts
-                var retrakUser = UserHelper.GetReTrakUser(e.Users.FirstOrDefault());
+                var user = e.Users.FirstOrDefault();
+                var retrakUser = UserHelper.GetReTrakUser(user);
 
                 if (retrakUser == null)
                 {
@@ -166,8 +170,9 @@ namespace ReTrak
                 _logger.Debug(retrakUser.LinkedMbUserId + " appears to be monitoring " + e.Item.Path);
 
                 var video = e.Item as Video;
+                var playbackPositionTicks = e.PlaybackPositionTicks ?? 0L;
                 var progressPercent = video.RunTimeTicks.HasValue && video.RunTimeTicks != 0 ?
-                    (float)(e.PlaybackPositionTicks ?? 0) / video.RunTimeTicks.Value * 100.0f : 0.0f;
+                    (float)playbackPositionTicks / video.RunTimeTicks.Value * 100.0f : 0.0f;
 
                 try
                 {
@@ -185,22 +190,124 @@ namespace ReTrak
                             _retrakApi.SendEpisodeStatusUpdateAsync(video as Episode, MediaStatus.Watching, retrakUser, progressPercent, CancellationToken.None).
                                       ConfigureAwait(false);
                     }
+
+                    _playbackState[user.Id] = new PlaybackState
+                    {
+                        IsPaused = false,
+                        PlaybackPositionTicks = playbackPositionTicks,
+                        PlaybackTime = DateTime.UtcNow
+                    };
                 }
                 catch (Exception ex)
                 {
                     _logger.ErrorException("Exception handled sending status update", ex);
                 }
-
-                var playEvent = new ProgressEvent
-                {
-                    UserId = e.Users.First().Id,
-                    ItemId = e.Item.Id,
-                    LastApiAccess = DateTimeOffset.UtcNow
-                };
             }
             catch (Exception ex)
             {
                 _logger.ErrorException("Error sending watching status update", ex, null);
+            }
+        }
+
+        /// <summary>
+        /// Media playback has progressed or been paused/resumed.
+        /// Let ReTrak know when the user pauses or resumes.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private async void KernelPlaybackProgress(object sender, PlaybackProgressEventArgs e)
+        {
+            if (e.Users == null || !e.Users.Any() || e.Item == null)
+            {
+                _logger.Error("Event details incomplete. Cannot process current media");
+                return;
+            }
+
+            if (!(e.Item is Movie) && !(e.Item is Episode))
+            {
+                return;
+            }
+
+            var user = e.Users.FirstOrDefault();
+            var retrakUser = UserHelper.GetReTrakUser(user);
+
+            if (retrakUser == null)
+            {
+                return;
+            }
+
+            if (!_retrakApi.CanSync(e.Item, retrakUser))
+            {
+                return;
+            }
+
+            PlaybackState state;
+            if (!_playbackState.TryGetValue(user.Id, out state))
+            {
+                state = new PlaybackState();
+            }
+
+            var video = e.Item as Video;
+            var playbackPositionTicks = e.PlaybackPositionTicks ?? 0L;
+            var realTimeDifferenceInSeconds = Math.Round((DateTime.UtcNow - state.PlaybackTime).TotalSeconds);
+            var tickDifferenceInSeconds = Math.Round(TimeSpan.FromTicks(playbackPositionTicks - state.PlaybackPositionTicks).TotalSeconds);
+            var progressPercent = video.RunTimeTicks.HasValue && video.RunTimeTicks != 0
+                ? (float)playbackPositionTicks / video.RunTimeTicks.Value * 100.0f
+                : 0.0f;
+
+            try
+            {
+                if (!_playbackState.TryGetValue(user.Id, out state))
+                {
+                    _logger.Warn("Received playback progress but initial state was never set - sending start now for user " + user.Name);
+                    _playbackState[user.Id] = new PlaybackState
+                    {
+                        IsPaused = false,
+                        PlaybackPositionTicks = playbackPositionTicks,
+                        PlaybackTime = DateTime.UtcNow
+                    };
+
+                    if (video is Movie)
+                    {
+                        await _retrakApi.SendMovieStatusUpdateAsync(
+                            video as Movie, MediaStatus.Watching, retrakUser, progressPercent, CancellationToken.None).ConfigureAwait(false);
+                    }
+                    else if (video is Episode)
+                    {
+                        await _retrakApi.SendEpisodeStatusUpdateAsync(
+                            video as Episode, MediaStatus.Watching, retrakUser, progressPercent, CancellationToken.None).ConfigureAwait(false);
+                    }
+
+                    return;
+                }
+
+                state.PlaybackPositionTicks = playbackPositionTicks;
+                state.PlaybackTime = DateTime.UtcNow;
+
+                var playbackSkipped = tickDifferenceInSeconds < -10 || tickDifferenceInSeconds > realTimeDifferenceInSeconds + 10;
+                if (e.IsPaused == state.IsPaused && !playbackSkipped)
+                {
+                    return;
+                }
+
+                state.IsPaused = e.IsPaused;
+                var status = state.IsPaused ? MediaStatus.Paused : MediaStatus.Watching;
+                _logger.Debug("Send " + video.GetType().Name + " playback status (" + status + ") update for user " + user.Name);
+
+                if (video is Movie)
+                {
+                    await _retrakApi.SendMovieStatusUpdateAsync(
+                        video as Movie, status, retrakUser, progressPercent, CancellationToken.None).ConfigureAwait(false);
+                }
+                else if (video is Episode)
+                {
+                    await _retrakApi.SendEpisodeStatusUpdateAsync(
+                        video as Episode, status, retrakUser, progressPercent, CancellationToken.None).ConfigureAwait(false);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.ErrorException("Error sending playback progress update", ex, null);
             }
         }
 
@@ -221,7 +328,8 @@ namespace ReTrak
             try
             {
                 _logger.Info("Playback Stopped");
-                var retrakUser = UserHelper.GetReTrakUser(e.Users.FirstOrDefault());
+                var user = e.Users.FirstOrDefault();
+                var retrakUser = UserHelper.GetReTrakUser(user);
 
                 if (retrakUser == null)
                 {
@@ -277,6 +385,7 @@ namespace ReTrak
                     }
                 }
 
+                _playbackState.Remove(user.Id);
             }
             catch (Exception ex)
             {
@@ -291,6 +400,7 @@ namespace ReTrak
         {
             _userDataManager.UserDataSaved -= _userDataManager_UserDataSaved;
             _sessionManager.PlaybackStart -= KernelPlaybackStart;
+            _sessionManager.PlaybackProgress -= KernelPlaybackProgress;
             _sessionManager.PlaybackStopped -= KernelPlaybackStopped;
             _libraryManager.ItemAdded -= LibraryManagerItemAdded;
             _libraryManager.ItemRemoved -= LibraryManagerItemRemoved;
@@ -298,17 +408,5 @@ namespace ReTrak
             _retrakApi = null;
             _libraryManagerEventsHelper = null;
         }
-    }
-
-
-
-    /// <summary>
-    /// 
-    /// </summary>
-    public class ProgressEvent
-    {
-        public Guid UserId;
-        public Guid ItemId;
-        public DateTimeOffset LastApiAccess;
     }
 }
